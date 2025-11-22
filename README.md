@@ -155,7 +155,7 @@ console.log(
 /*
 {
   valid: false,
-  error: Error: ($.profile.name: nana) ✖ (minLength: 6))
+  error: Error: ($.profile.name: nana) ✖ (minLength: 6)
       at ...
     expected: 'minLength',
     actual: 'nana',
@@ -189,7 +189,7 @@ console.log(
 /*
 {
   valid: false,
-  error: Error: ($.emails[1]: email) ✖ isEmail)
+  error: Error: ($.emails[1]: email) ✖ isEmail
       at ...
     expected: 'check',
     actual: 'email',

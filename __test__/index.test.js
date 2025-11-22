@@ -200,7 +200,7 @@ describe('check', () => {
     )
     const res = validate(schema, 0)
     expect(res.valid).toBe(false)
-    expect(res.error.message).toContain('check)')
+    expect(res.error.message).toContain('check')
   })
 
   test('if fn throws, error is wrapped by createValidator', () => {

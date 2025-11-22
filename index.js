@@ -74,7 +74,7 @@ export function check (fn, msg) {
 
     if (result === true) return value
 
-    const message = msg || `(${ctx.path}: ${formatValue(value)}) ✖ ${fn.name || 'check'})`
+    const message = msg || `(${ctx.path}: ${formatValue(value)}) ✖ ${fn.name || 'check'}`
     throw new Error(message)
   })()
 }
@@ -104,7 +104,7 @@ export const string = createValidator('string', (value, ctx, args) => {
   const [msg] = args
 
   if (typeof value !== 'string') {
-    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ string)`)
+    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ string`)
   }
 
   return value
@@ -114,7 +114,7 @@ export const number = createValidator('number', (value, ctx, args) => {
   const [msg] = args
 
   if (typeof value !== 'number') {
-    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ number)`)
+    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ number`)
   }
 
   return value
@@ -124,7 +124,7 @@ export const bigint = createValidator('bigint', (value, ctx, args) => {
   const [msg] = args
 
   if (typeof value !== 'bigint') {
-    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ bigint)`)
+    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ bigint`)
   }
 
   return value
@@ -134,7 +134,7 @@ export const boolean = createValidator('boolean', (value, ctx, args) => {
   const [msg] = args
 
   if (typeof value !== 'boolean') {
-    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ boolean)`)
+    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ boolean`)
   }
 
   return value
@@ -144,7 +144,7 @@ export const symbol = createValidator('symbol', (value, ctx, args) => {
   const [msg] = args
 
   if (typeof value !== 'symbol') {
-    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ symbol)`)
+    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ symbol`)
   }
 
   return value
@@ -154,7 +154,7 @@ export const object = createValidator('object', (value, ctx, args) => {
   const [obj, msg] = args
 
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ object)`)
+    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ object`)
   }
 
   const result = {}
@@ -169,7 +169,7 @@ export const array = createValidator('array', (value, ctx, args) => {
   const [validator, msg] = args
 
   if (!Array.isArray(value)) {
-    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ array)`)
+    throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ array`)
   }
 
   return value.map((item, i) => {
