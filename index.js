@@ -69,12 +69,13 @@ export function transform (fn) {
 }
 
 export function check (fn, msg) {
-  return createValidator('check', (value, ctx) => {
+  const expected = fn.name || 'check'
+  return createValidator(expected, (value, ctx) => {
     const result = fn(value, ctx)
 
     if (result === true) return value
 
-    const message = msg || `(${ctx.path}: ${formatValue(value)}) ✖ ${fn.name || 'check'}`
+    const message = msg || `(${ctx.path}: ${formatValue(value)}) ✖ ${expected}`
     throw new Error(message)
   })()
 }

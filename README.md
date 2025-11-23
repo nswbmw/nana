@@ -118,7 +118,7 @@ const minLength = createValidator('minLength', (value, ctx, args) => {
 
   if (value.length < expected) {
     throw new Error(
-      msg || `(${ctx.path}: ${formatValue(value)}) ✖ (minLength: ${formatValue(expected)}))`
+      msg || `(${ctx.path}: ${formatValue(value)}) ✖ (minLength: ${formatValue(expected)})`
     )
   }
 
@@ -191,7 +191,7 @@ console.log(
   valid: false,
   error: Error: ($.emails[1]: email) ✖ isEmail
       at ...
-    expected: 'check',
+    expected: 'isEmail',
     actual: 'email',
     path: '$.emails[1]',
     key: 1,
