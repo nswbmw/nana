@@ -1,3 +1,8 @@
+## v1.2.0 / 2025-12-16
+
+- fix: rename __skipNext to __abortPipe
+- chore: update devDependencies
+
 ## v1.1.0 / 2025-12-10
 
 - feat: add ctx.__skipNext & required & optional
