@@ -37,13 +37,13 @@ describe('formatValue', () => {
     const s = Symbol('x')
     expect(formatValue(s)).toBe(s.toString())
 
-    function foo () { }
+    function foo () {}
     expect(formatValue(foo)).toBe('[Function: foo]')
 
-    const bar = function () { }
+    const bar = function () {}
     expect(formatValue(bar)).toBe('[Function: bar]')
 
-    expect(formatValue(() => { })).toBe('[Function]')
+    expect(formatValue(() => {})).toBe('[Function]')
   })
 
   test('RegExp and Date', () => {
