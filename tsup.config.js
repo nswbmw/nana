@@ -3,14 +3,14 @@ import { defineConfig } from 'tsup'
 export default defineConfig([
   // ESM build
   {
-    entry: ['index.js'],
+    entry: ['index.ts'],
     format: 'esm',
-    dts: false,
+    dts: true,
     splitting: false,
     sourcemap: false,
     clean: true,
     minify: false,
-    bundle: false,
+    bundle: true,
     outDir: 'dist/esm',
     target: 'es2020',
     esbuildOptions (options) {
@@ -20,18 +20,18 @@ export default defineConfig([
   },
   // CJS build
   {
-    entry: ['index.js'],
+    entry: ['index.ts'],
     format: 'cjs',
-    dts: false,
+    dts: true,
     splitting: false,
     sourcemap: false,
     clean: true,
     minify: false,
-    bundle: false,
+    bundle: true,
     outDir: 'dist/cjs',
     target: 'es2020',
     outExtension () {
-      return { js: '.cjs' }
+      return { js: '.js' }
     },
     esbuildOptions (options) {
       options.drop = ['debugger']

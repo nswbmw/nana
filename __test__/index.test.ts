@@ -1,4 +1,4 @@
-// __test__/index.test.js
+import { describe, test, expect } from '@jest/globals'
 import {
   makeCtx,
   formatValue,
@@ -7,14 +7,18 @@ import {
   transform,
   check,
   validate,
+  required,
+  optional,
   string,
   number,
   bigint,
   boolean,
   symbol,
   object,
-  array
-} from '../index.js'
+  array,
+  ValidationError,
+  InferOutput
+} from '../index.ts'
 
 describe('formatValue', () => {
   test('null and undefined', () => {
@@ -33,13 +37,13 @@ describe('formatValue', () => {
     const s = Symbol('x')
     expect(formatValue(s)).toBe(s.toString())
 
-    function foo () {}
+    function foo() { }
     expect(formatValue(foo)).toBe('[Function: foo]')
 
-    const bar = function () {}
+    const bar = function () { }
     expect(formatValue(bar)).toBe('[Function: bar]')
 
-    expect(formatValue(() => {})).toBe('[Function]')
+    expect(formatValue(() => { })).toBe('[Function]')
   })
 
   test('RegExp and Date', () => {
@@ -56,7 +60,7 @@ describe('formatValue', () => {
   })
 
   test('other objects fallback to Object.prototype.toString', () => {
-    class MyClass {}
+    class MyClass { }
     const v = new MyClass()
     expect(formatValue(v)).toBe(Object.prototype.toString.call(v))
   })
@@ -90,7 +94,7 @@ describe('makeCtx', () => {
 
 describe('createValidator', () => {
   test('success passes through value', () => {
-    const v = createValidator('double', (value) => value * 2)()
+    const v = createValidator<number>('double', (value) => value * 2)()
     expect(v(2, makeCtx(null, null, 2))).toBe(4)
   })
 
@@ -116,7 +120,7 @@ describe('createValidator', () => {
 
   test('does not override expected if already set', () => {
     const v = createValidator('outer', () => {
-      const e = new Error('inner')
+      const e = new Error('inner') as ValidationError
       e.expected = 'inner'
       throw e
     })()
@@ -133,8 +137,8 @@ describe('createValidator', () => {
 
 describe('pipe', () => {
   test('runs validators in sequence', () => {
-    const add1 = createValidator('add1', v => v + 1)()
-    const mul2 = createValidator('mul2', v => v * 2)()
+    const add1 = createValidator<number>('add1', v => v + 1)()
+    const mul2 = createValidator<number>('mul2', v => v * 2)()
 
     const schema = pipe(add1, mul2)
     const ctx = makeCtx(null, null, 1)
@@ -142,7 +146,7 @@ describe('pipe', () => {
   })
 
   test('propagates error from inner validator', () => {
-    const fail = createValidator('fail', () => {
+    const fail = createValidator<any>('fail', (v) => {
       throw new Error('fail')
     })()
     const schema = pipe(fail)
@@ -163,7 +167,7 @@ describe('check', () => {
   test('passes when fn returns true', () => {
     const schema = pipe(
       number(),
-      check(v => v > 0)
+      check<number>(v => v > 0)
     )
     const res = validate(schema, 1)
     expect(res.valid).toBe(true)
@@ -173,34 +177,34 @@ describe('check', () => {
   test('fails when fn returns false with custom message', () => {
     const schema = pipe(
       number(),
-      check(v => v > 0, 'must be > 0')
+      check<number>(v => v > 0, 'must be > 0')
     )
     const res = validate(schema, 0)
     expect(res.valid).toBe(false)
-    expect(res.error).toBeInstanceOf(Error)
-    expect(res.error.message).toBe('must be > 0')
+    expect((res.error as ValidationError)).toBeInstanceOf(Error)
+    expect((res.error as ValidationError).message).toBe('must be > 0')
   })
 
   test('fails with default message when fn returns false and no msg', () => {
-    const namedFn = function isPositive (v) { return v > 0 }
+    const namedFn = function isPositive(v) { return v > 0 }
     const schema = pipe(
       number(),
       check(namedFn)
     )
     const res = validate(schema, 0)
     expect(res.valid).toBe(false)
-    expect(res.error.message).toContain('isPositive')
-    expect(res.error.message).toContain('$')
+    expect((res.error as ValidationError).message).toContain('isPositive')
+    expect((res.error as ValidationError).message).toContain('$')
   })
 
   test('uses default name when fn is anonymous', () => {
     const schema = pipe(
       number(),
-      check(v => v > 0)
+      check<number>(v => v > 0)
     )
     const res = validate(schema, 0)
     expect(res.valid).toBe(false)
-    expect(res.error.message).toContain('check')
+    expect((res.error as ValidationError).message).toContain('check')
   })
 
   test('if fn throws, error is wrapped by createValidator', () => {
@@ -212,8 +216,8 @@ describe('check', () => {
     )
     const res = validate(schema, 1)
     expect(res.valid).toBe(false)
-    expect(res.error.message).toBe('boom')
-    expect(res.error.expected).toBe('check')
+    expect((res.error as ValidationError).message).toBe('boom')
+    expect((res.error as ValidationError).expected).toBe('check')
   })
 })
 
@@ -227,10 +231,10 @@ describe('validate', () => {
 
   test('returns valid false and keeps original value', () => {
     const schema = number()
-    const res = validate(schema, 'not number')
+    const res = validate(schema, 'not number' as any)
     expect(res.valid).toBe(false)
     expect(res.result).toBe('not number')
-    expect(res.error).toBeInstanceOf(Error)
+    expect((res.error as ValidationError)).toBeInstanceOf(Error)
   })
 })
 
@@ -239,30 +243,60 @@ describe('primitive validators', () => {
     const ctx = makeCtx(null, null, 'x')
     expect(string()('x', ctx)).toBe('x')
     expect(() => string()(
-      1,
+      1 as any,
       makeCtx(null, 's', 1)
     )).toThrow('string')
   })
 
   test('number success and failure', () => {
     expect(number()(1, makeCtx(null, null, 1))).toBe(1)
-    expect(() => number()('1', makeCtx(null, null, '1'))).toThrow('number')
+    expect(() => number()('1' as any, makeCtx(null, null, '1'))).toThrow('number')
   })
 
   test('bigint success and failure', () => {
     expect(bigint()(10n, makeCtx(null, null, 10n))).toBe(10n)
-    expect(() => bigint()(1, makeCtx(null, null, 1))).toThrow('bigint')
+    expect(() => bigint()(1 as any, makeCtx(null, null, 1))).toThrow('bigint')
   })
 
   test('boolean success and failure', () => {
     expect(boolean()(true, makeCtx(null, null, true))).toBe(true)
-    expect(() => boolean()('true', makeCtx(null, null, 'true'))).toThrow('boolean')
+    expect(() => boolean()('true' as any, makeCtx(null, null, 'true'))).toThrow('boolean')
   })
 
   test('symbol success and failure', () => {
     const s = Symbol('x')
     expect(symbol()(s, makeCtx(null, null, s))).toBe(s)
-    expect(() => symbol()('sym', makeCtx(null, null, 'sym'))).toThrow('symbol')
+    expect(() => symbol()('sym' as any, makeCtx(null, null, 'sym'))).toThrow('symbol')
+  })
+})
+
+describe('required and optional', () => {
+  test('required passes for non-null and fails for null with default message', () => {
+    const ctxOk = makeCtx(null, null, 'x')
+    expect(required()('x', ctxOk)).toBe('x')
+
+    const ctxBad = makeCtx(null, 'r', null)
+    expect(() => required()(null, ctxBad)).toThrow('required')
+  })
+
+  test('required uses custom message when provided', () => {
+    const ctx = makeCtx(null, null, undefined)
+    expect(() => required('must not be null or undefined')(undefined, ctx)).toThrow('must not be null or undefined')
+  })
+
+  test('optional skips following validators in pipe when value is null', () => {
+    const schema = pipe(
+      optional(),
+      string()
+    )
+
+    const resNull = validate(schema, null)
+    expect(resNull.valid).toBe(true)
+    expect(resNull.result).toBeNull()
+
+    const resValue = validate(schema, 'ok')
+    expect(resValue.valid).toBe(true)
+    expect(resValue.result).toBe('ok')
   })
 })
 
@@ -303,24 +337,127 @@ describe('object validator', () => {
     const value = { user: { name: 'nana', age: 'bad' } }
     const res = validate(schema, value)
     expect(res.valid).toBe(false)
-    expect(res.error.path).toBe('$.user.age')
+    expect((res.error as ValidationError).path).toBe('$.user.age')
   })
 })
 
 describe('array validator', () => {
   test('fails when not array', () => {
     const schema = array(number())
-    expect(() => schema('not array', makeCtx(null, null, 'not array'))).toThrow('array')
+    expect(() => schema('not array' as any, makeCtx(null, null, 'not array'))).toThrow('array')
   })
 
   test('validates each element with proper path', () => {
     const schema = array(number())
-    const res = validate(schema, [1, 2, 3])
+    type Schema = InferOutput<typeof schema>
+    const res = validate(schema, [1, 2, 3] as Schema)
     expect(res.valid).toBe(true)
     expect(res.result).toEqual([1, 2, 3])
 
     const bad = validate(schema, [1, 'x', 3])
     expect(bad.valid).toBe(false)
-    expect(bad.error.path).toBe('$[1]')
+    if (!bad.valid) {
+      expect(bad.error.path).toBe('$[1]')
+    }
+  })
+})
+
+describe('complex scene', () => {
+  test('nested object array', () => {
+
+    const allActions = [
+      'action_1',
+      'action_2',
+      'action_3',
+      'action_4',
+      'action_5',
+    ] as const
+    const onlineActions = [
+      'action_1',
+      'action_2'
+    ] as const
+    const platforms = ['platform_1', 'platform_2'] as const
+    const serviceCheck = check<number>(function serviceCheck(value, ctx) {
+      return value > 0
+    })
+    const childServiceSchema = object({
+      platform: check<(typeof platforms)[number]>(function platformCheck(value, ctx) {
+        return platforms.includes(value)
+      }),
+      service: pipe(number(), serviceCheck),
+      weight: pipe(number(), check<number>(function weightCheck(value, ctx) {
+        return value >= 0
+      }))
+    })
+    const mainServiceSchema = object({
+      action: check<(typeof allActions)[number]>(function mainActionCheck(value, ctx) {
+        return allActions.includes(value)
+      }),
+      service: pipe(number(), serviceCheck),
+      childServices: pipe(
+        check(function childServicesLengthCheck(value, ctx) {
+          return value.length > 0
+        }, 'childServices must not be empty'),
+        array(childServiceSchema),
+      )
+    })
+    type MainServiceSchema = InferOutput<typeof mainServiceSchema>
+
+    const schema = pipe(
+      array(mainServiceSchema),
+      check(function duplicateServiceCheck(value, ctx) {
+        const services = value.map(ws => ws.service)
+        const serviceSet = new Set(services)
+        return services.length === serviceSet.size
+      }),
+      check(function includeAllOnlineActionCheck(value, ctx) {
+        const mainActions = value.map(ws => ws.action)
+        return onlineActions.every(a => mainActions.includes(a))
+      }),
+      check(function actionInAllActionCheck(value, ctx) {
+        const mainActions = value.map(ws => ws.action)
+        return mainActions.every(a => allActions.includes(a))
+      })
+    )
+    try {
+      const data = [
+        {
+          "action": "action_1",
+          "service": 1200,
+          "childServices": [
+            {
+              "platform": "platform_1",
+              "service": 7787,
+              "weight": 1
+            },
+            {
+              "platform": "platform_1",
+              "service": 8219,
+              "weight": 0
+            }
+          ]
+        },
+        {
+          "action": "action_10",
+          "service": 1200,
+          "childServices": [
+            {
+              "platform": "platform_2",
+              "service": 21417,
+              "weight": 1
+            },
+            {
+              "platform": "platform_1",
+              "service": 8219,
+              "weight": 0
+            }
+          ]
+        }
+      ] as MainServiceSchema[]
+      const bad = schema(data, makeCtx(null, null, data))
+      console.log(bad)
+    } catch (error) {
+      console.log(error)
+    }
   })
 })

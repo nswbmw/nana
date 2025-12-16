@@ -1,3 +1,7 @@
+## v1.1.0 / 2025-12-10
+
+- feat: add ctx.__skipNext & required & optional
+
 ## v1.0.3 / 2025-11-24
 
 - fix: exports types in package.json

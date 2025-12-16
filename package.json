@@ -1,16 +1,16 @@
 {
   "name": "nana",
   "description": "A minimal validator for any JavaScript environment.",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "type": "module",
-  "main": "dist/cjs/index.cjs",
+  "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "types": "types/index.d.ts",
+  "types": "dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./types/index.d.ts",
+      "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.cjs",
+      "require": "./dist/cjs/index.js",
       "default": "./dist/esm/index.js"
     }
   },
@@ -40,16 +40,19 @@
     "schema",
     "json-schema",
     "zod",
-    "valibot"
+    "valibot",
+    "typescript"
   ],
   "devDependencies": {
     "@commitlint/cli": "20.1.0",
     "@commitlint/config-conventional": "20.0.0",
+    "@jest/globals": "^30.2.0",
     "eslint": "9.39.1",
     "globals": "16.5.0",
     "husky": "9.1.7",
     "jest": "30.2.0",
     "neostandard": "0.12.2",
+    "ts-jest": "^29.4.6",
     "tsup": "8.5.1"
   }
 }

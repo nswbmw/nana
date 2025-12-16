@@ -6,7 +6,7 @@
 
 A minimal validator for any JavaScript environment.
 
-- ~150 lines of code, 0 dependencies, <1KB Gzipped
+- ~200 lines of code, 0 dependencies
 - Only 3 concepts: `pipe`, `transform`, `check`
 - Rich error context: `expected/actual/path/key/parent/root`
 
@@ -209,6 +209,8 @@ console.log(
 
 ## Built-in validators
 
+- `required(msg?)`
+- `optional()`
 - `string(msg?)`
 - `number(msg?)`
 - `bigint(msg?)`
