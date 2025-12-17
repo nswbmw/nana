@@ -1,7 +1,6 @@
-import type { Config } from 'jest'
 import { createDefaultPreset } from 'ts-jest'
 
-const config: Config = {
+const config = {
   // Coverage settings
   collectCoverage: true,
   coverageDirectory: 'coverage',
