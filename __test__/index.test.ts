@@ -7,6 +7,7 @@ import {
   transform,
   check,
   validate,
+  validateAll,
   required,
   optional,
   string,
@@ -392,6 +393,147 @@ describe('array validator', () => {
   })
 })
 
+describe('validateAll', () => {
+  test('returns valid true with transformed result and empty errors on success', () => {
+    const schema = pipe(
+      number(),
+      transform(v => v + 1)
+    )
+
+    const res = validateAll(schema, 1)
+    expect(res.valid).toBe(true)
+    if (res.valid) {
+      expect(res.result).toBe(2)
+      expect(res.errors).toEqual([])
+    }
+  })
+
+  test('collects all field errors in object and keeps original value as result', () => {
+    const schema = object({
+      name: string(),
+      age: number()
+    })
+
+    const value = { name: 1, age: 'x' }
+    const res = validateAll(schema, value as any)
+    expect(res.valid).toBe(false)
+    if (!res.valid) {
+      expect(res.result).toBe(value)
+      expect(res.errors).toHaveLength(2)
+      expect(res.errors.map(e => e.path).sort()).toEqual(['$.age', '$.name'])
+      expect(res.errors.map(e => e.expected).sort()).toEqual(['number', 'string'])
+    }
+  })
+
+  test('collects errors in array of objects with correct paths', () => {
+    const schema = array(object({
+      id: number(),
+      name: string()
+    }))
+
+    const value = [
+      { id: 'x', name: 'ok' },
+      { id: 1, name: 2 }
+    ]
+    const res = validateAll(schema, value as any)
+    expect(res.valid).toBe(false)
+    if (!res.valid) {
+      expect(res.errors).toHaveLength(2)
+      const paths = res.errors.map(e => e.path).sort()
+      expect(paths).toEqual(['$[0].id', '$[1].name'])
+    }
+  })
+
+  test('aborts remaining pipe validators for the same field after first error', () => {
+    const schema = pipe(
+      number(),
+      check<number>(() => {
+        throw new Error('should not run')
+      })
+    )
+
+    const res = validateAll(schema, 'x' as any)
+    expect(res.valid).toBe(false)
+    if (!res.valid) {
+      expect(res.errors).toHaveLength(1)
+      expect(res.errors[0].expected).toBe('number')
+      expect(res.errors[0].message).toContain('number')
+    }
+  })
+
+  test('captures top-level throw (non createValidator) into errors', () => {
+    const schema = ((value: any, ctx: any) => {
+      throw new Error('top level')
+    }) as any
+
+    const res = validateAll(schema, 1)
+    expect(res.valid).toBe(false)
+    if (!res.valid) {
+      expect(res.errors).toHaveLength(1)
+      expect(res.errors[0]).toBeInstanceOf(Error)
+      expect(res.errors[0].message).toBe('top level')
+    }
+  })
+
+  test('initializes ctx.__errors lazily when collecting errors in createValidator', () => {
+    const v = number()
+    const ctx: any = makeCtx(null, null, 'x')
+    ctx.__collectErrors = true
+    delete ctx.__errors
+
+    const result = v('x' as any, ctx)
+    expect(result).toBe('x')
+    expect(Array.isArray(ctx.__errors)).toBe(true)
+    expect(ctx.__errors).toHaveLength(1)
+    expect(ctx.__errors[0].expected).toBe('number')
+  })
+
+  test('collects error thrown by raw validator inside object field (not wrapped by createValidator)', () => {
+    const rawThrow = ((value: any, ctx: any) => {
+      throw new Error('raw field')
+    }) as any
+
+    const schema = object({
+      a: rawThrow
+    })
+
+    const res = validateAll(schema, { a: 1 })
+    expect(res.valid).toBe(false)
+    if (!res.valid) {
+      expect(res.errors).toHaveLength(1)
+      expect(res.errors[0].message).toBe('raw field')
+    }
+  })
+
+  test('collects error thrown by raw validator inside array element (not wrapped by createValidator)', () => {
+    const rawThrow = ((value: any, ctx: any) => {
+      throw new Error('raw item')
+    }) as any
+
+    const schema = array(rawThrow)
+    const res = validateAll(schema, [1])
+    expect(res.valid).toBe(false)
+    if (!res.valid) {
+      expect(res.errors).toHaveLength(1)
+      expect(res.errors[0].message).toBe('raw item')
+    }
+  })
+
+  test('uses fallback empty errors array when ctx.__errors is missing', () => {
+    const schema = ((value: any, ctx: any) => {
+      delete ctx.__errors
+      return value
+    }) as any
+
+    const res = validateAll(schema, 1)
+    expect(res.valid).toBe(true)
+    if (res.valid) {
+      expect(res.result).toBe(1)
+      expect(res.errors).toEqual([])
+    }
+  })
+})
+
 describe('complex scene', () => {
   test('nested object array', () => {
     const allActions = [
@@ -448,45 +590,44 @@ describe('complex scene', () => {
         return mainActions.every(a => allActions.includes(a))
       })
     )
-    try {
-      const data = [
-        {
-          action: 'action_1',
-          service: 1200,
-          childServices: [
-            {
-              platform: 'platform_1',
-              service: 7787,
-              weight: 1
-            },
-            {
-              platform: 'platform_1',
-              service: 8219,
-              weight: 0
-            }
-          ]
-        },
-        {
-          action: 'action_10',
-          service: 1200,
-          childServices: [
-            {
-              platform: 'platform_2',
-              service: 21417,
-              weight: 1
-            },
-            {
-              platform: 'platform_1',
-              service: 8219,
-              weight: 0
-            }
-          ]
-        }
-      ] as MainServiceSchema[]
-      const bad = schema(data, makeCtx(null, null, data))
-      console.log(bad)
-    } catch (error) {
-      console.log(error)
+    const data = [
+      {
+        action: 'action_1',
+        service: 1200,
+        childServices: [
+          {
+            platform: 'platform_1',
+            service: 7787,
+            weight: 1
+          },
+          {
+            platform: 'platform_1',
+            service: 8219,
+            weight: 0
+          }
+        ]
+      },
+      {
+        action: 'action_10',
+        service: 1200,
+        childServices: [
+          {
+            platform: 'platform_2',
+            service: 21417,
+            weight: 1
+          },
+          {
+            platform: 'platform_1',
+            service: 8219,
+            weight: 0
+          }
+        ]
+      }
+    ] as MainServiceSchema[]
+    const res = validateAll(schema, data)
+    expect(res.valid).toBe(false)
+    if (!res.valid) {
+      expect(res.errors).toHaveLength(2)
     }
   })
 })
