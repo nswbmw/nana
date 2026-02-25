@@ -1,17 +1,17 @@
 {
   "name": "nana",
   "description": "A minimal validator for any JavaScript environment.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
-  "main": "dist/cjs/index.cjs",
-  "module": "dist/esm/index.js",
-  "types": "types/index.d.ts",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./types/index.d.ts",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./dist/esm/index.js",
+      "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs",
-      "default": "./dist/esm/index.js"
+      "default": "./dist/esm/index.mjs"
     }
   },
   "files": [
@@ -23,7 +23,7 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "build": "tsup",
+    "build": "tsdown",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
     "prepare": "husky"
@@ -43,13 +43,13 @@
     "valibot"
   ],
   "devDependencies": {
-    "@commitlint/cli": "20.2.0",
-    "@commitlint/config-conventional": "20.2.0",
+    "@commitlint/cli": "20.4.1",
+    "@commitlint/config-conventional": "20.4.1",
     "eslint": "9.39.2",
-    "globals": "16.5.0",
+    "globals": "17.3.0",
     "husky": "9.1.7",
     "jest": "30.2.0",
     "neostandard": "0.12.2",
-    "tsup": "8.5.1"
+    "tsdown": "^0.20.3"
   }
 }
