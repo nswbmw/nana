@@ -1,4 +1,4 @@
-## v2.0.0 / 2026-2-25
+## v2.0.0 / 2026-02-25
 
 - add validateAll to collect all validation errors
 - add InferOutput to get schema type
