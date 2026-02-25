@@ -4,9 +4,11 @@ export interface Ctx {
   parent: any
   root: any
   __abortPipe?: boolean
+  __collectErrors?: boolean
+  __errors?: ValidationError[]
   [key: string]: any
 }
-
+const DEFAULT_ROOT_PATH = '$'
 export type Validator<Input = any, Output = Input> = (value: Input, ctx: Ctx) => Output
 
 export interface ValidationError extends Error {
@@ -18,13 +20,26 @@ export interface ValidationError extends Error {
   root?: any
 }
 
+function collectError (ctx: Ctx, error: ValidationError) {
+  if (!ctx.__errors) {
+    ctx.__errors = []
+  }
+  ctx.__errors.push(error)
+}
+
+function attachCollector (parentCtx: Ctx, childCtx: Ctx) {
+  if (!parentCtx.__collectErrors) return
+  childCtx.__collectErrors = true
+  childCtx.__errors = parentCtx.__errors
+}
+
 export type ValidatorFactory<Input = any, Output = Input, Args extends any[] = any[]> = (
   ...args: Args
 ) => Validator<Input, Output>
 
 export function makeCtx (parentCtx: Ctx | null, key: string | number | null, value: any, root?: any): Ctx {
   let path: string
-  if (!parentCtx) path = '$'
+  if (!parentCtx) path = DEFAULT_ROOT_PATH
   else if (typeof key === 'number') path = `${parentCtx.path}[${key}]`
   else path = `${parentCtx.path}.${key}`
 
@@ -68,7 +83,7 @@ export function createValidator<I = unknown, O = I, Args extends any[] = any[]> 
         return handler(value, ctx, args)
       } catch (err) {
         const error: ValidationError =
-                    err instanceof Error ? (err as ValidationError) : (new Error(String(err)) as ValidationError)
+          err instanceof Error ? (err as ValidationError) : (new Error(String(err)) as ValidationError)
 
         if (!error.expected) {
           error.expected = name
@@ -78,6 +93,12 @@ export function createValidator<I = unknown, O = I, Args extends any[] = any[]> 
           error.key = ctx.key
           error.parent = ctx.parent
           error.root = ctx.root
+        }
+
+        if (ctx.__collectErrors) {
+          collectError(ctx, error)
+          ctx.__abortPipe = true
+          return value as any as O
         }
 
         throw error
@@ -163,10 +184,10 @@ export function check<I = any> (fn: (value: I, ctx: Ctx) => boolean, msg?: strin
 }
 
 export type ValidateResult<O> =
-    | { valid: true; result: O; error?: undefined }
-    | { valid: false; error: ValidationError; result: any }
+  | { valid: true; result: O; error?: undefined }
+  | { valid: false; error: ValidationError; result: any }
 
-export function validate<I, O> (schema: Validator<I, O>, value: I, rootPath = '$'): ValidateResult<O> {
+export function validate<I, O> (schema: Validator<I, O>, value: I, rootPath = DEFAULT_ROOT_PATH): ValidateResult<O> {
   const ctx = {
     path: rootPath,
     key: null,
@@ -185,6 +206,41 @@ export function validate<I, O> (schema: Validator<I, O>, value: I, rootPath = '$
       result: value
     }
   }
+}
+
+export type ValidateAllResult<O> =
+  | { valid: true; result: O; errors: [] }
+  | { valid: false; result: any; errors: ValidationError[]; }
+
+export function validateAll<I, O> (schema: Validator<I, O>, value: I, rootPath = DEFAULT_ROOT_PATH): ValidateAllResult<O> {
+  const ctx: Ctx = {
+    path: rootPath,
+    key: null,
+    parent: null,
+    root: value,
+    value,
+    __collectErrors: true,
+    __errors: []
+  }
+
+  let result: any = value
+
+  try {
+    result = schema(value, ctx)
+  } catch (error: any) {
+    collectError(ctx, error)
+  }
+
+  const errors = ctx.__errors ?? []
+  if (errors.length > 0) {
+    return {
+      valid: false,
+      errors,
+      result: value
+    }
+  }
+
+  return { valid: true, result, errors: [] }
 }
 
 export const required = createValidator<any, any, [string?]>('required', (value, ctx, args) => {
@@ -266,7 +322,18 @@ export function object<S extends Record<string, Validator<any, any>>> (shape: S,
     const result: any = {}
     for (const key in shape) {
       const childCtx = makeCtx(ctx, key, (value as any)[key])
-      result[key] = shape[key]((value as any)[key], childCtx)
+      attachCollector(ctx, childCtx)
+
+      try {
+        result[key] = shape[key]((value as any)[key], childCtx)
+      } catch (error: any) {
+        if (ctx.__collectErrors) {
+          collectError(ctx, error)
+          result[key] = (value as any)[key]
+          continue
+        }
+        throw error
+      }
     }
     return result
   })()
@@ -280,7 +347,17 @@ export function array<T> (validator: Validator<any, T>, msg?: string) {
 
     return value.map((item, i) => {
       const childCtx = makeCtx(ctx, i, item)
-      return validator(item, childCtx)
+      attachCollector(ctx, childCtx)
+
+      try {
+        return validator(item, childCtx)
+      } catch (error: any) {
+        if (ctx.__collectErrors) {
+          collectError(ctx, error)
+          return item
+        }
+        throw error
+      }
     })
   })()
 }
