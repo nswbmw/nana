@@ -1,3 +1,10 @@
+## v2.0.0 / 2026-2-25
+
+- add validateAll to collect all validation errors
+- add InferOutput to get schema type
+- refactor: use tsdown instead of tsup
+- chore(deps): update deps
+
 ## v1.2.0 / 2025-12-16
 
 - fix: rename __skipNext to __abortPipe

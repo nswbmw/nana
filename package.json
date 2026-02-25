@@ -1,17 +1,21 @@
 {
   "name": "nana",
   "description": "A minimal validator for any JavaScript environment.",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "type": "module",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/esm/index.d.ts",
+  "main": "dist/cjs/index.cjs",
+  "module": "dist/esm/index.mjs",
+  "types": "dist/esm/index.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/esm/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "default": "./dist/esm/index.js"
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
     }
   },
   "files": [
@@ -23,9 +27,10 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "build": "tsup",
+    "build": "tsdown",
+    "type-check": "tsc --noEmit",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "prepublishOnly": "npm run type-check && npm run lint && npm run test && npm run build",
     "prepare": "husky"
   },
   "author": "nswbmw",
@@ -44,15 +49,16 @@
     "typescript"
   ],
   "devDependencies": {
-    "@commitlint/cli": "20.2.0",
-    "@commitlint/config-conventional": "20.2.0",
+    "@commitlint/cli": "20.4.1",
+    "@commitlint/config-conventional": "20.4.1",
     "@jest/globals": "^30.2.0",
     "eslint": "9.39.2",
-    "globals": "16.5.0",
+    "globals": "17.3.0",
     "husky": "9.1.7",
     "jest": "30.2.0",
     "neostandard": "0.12.2",
     "ts-jest": "^29.4.6",
-    "tsup": "8.5.1"
+    "tsdown": "^0.20.3",
+    "typescript": "^5.9.3"
   }
 }
