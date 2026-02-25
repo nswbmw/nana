@@ -6,7 +6,7 @@
 
 A minimal validator for any JavaScript environment.
 
-- ~200 lines of code, 0 dependencies
+- ~360 lines of code, 0 dependencies
 - Only 3 concepts: `pipe`, `transform`, `check`
 - Rich error context: `expected/actual/path/key/parent/root`
 
@@ -48,6 +48,7 @@ console.log(
     actual: 'God',
     path: '$.job.title',
     key: 'title',
+    message: 'You cannot be God',
     parent: { title: 'God' },
     root: { name: 'nana', job: [Object] }
   },
@@ -171,6 +172,47 @@ console.log(
   result: { profile: { name: 'nana', age: 16, gender: 'lalala' } }
 }
 */
+```
+
+## validateAll (collect all errors)
+
+Unlike `validate` which stops at the first error, `validateAll` collects all validation errors:
+
+```js
+import { string, number, object, validateAll } from 'nana'
+
+const userSchema = object({
+  name: string(),
+  age: number()
+})
+
+const result = validateAll(userSchema, { name: 2, age: 'nana' })
+
+/*
+{
+  valid: false,
+  errors: [
+    Error: ($.name: 2) ✖ string,
+    Error: ($.age: nana) ✖ number
+  ],
+  result: { name: 2, age: 'nana' }
+}
+*/
+
+## TypeScript
+
+Use `InferOutput` to extract the output type from a schema:
+
+```ts
+import { string, number, object, InferOutput } from 'nana'
+
+const userSchema = object({
+  name: string(),
+  age: number()
+})
+
+type User = InferOutput<typeof userSchema>
+// type User = { name: string; age: number }
 ```
 
 ## With third party validator
