@@ -106,14 +106,14 @@ export function createValidator<I = unknown, O = I, Args extends any[] = any[]> 
     }
   }
 }
-interface ControlValidator {
+export interface ControlValidator {
   __control?: true
 }
 type IsControl<V> = V extends ControlValidator ? true : false
-type InputOf<V> =
+export type InputOf<V> =
     V extends (value: infer I, ctx: Ctx) => any ? I : never
 
-type OutputOf<V> =
+export type OutputOf<V> =
     V extends (value: any, ctx: Ctx) => infer O ? O : never
 
 type Simplify<T> = { [K in keyof T]: T[K] } & {}
