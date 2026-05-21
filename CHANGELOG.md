@@ -1,3 +1,8 @@
+
+## v2.0.1 / 2026-05-21
+
+- fix: export types
+
 ## v2.0.0 / 2026-02-25
 
 - add validateAll to collect all validation errors
