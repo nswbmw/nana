@@ -15,7 +15,8 @@ import {
   boolean,
   symbol,
   object,
-  array
+  array,
+  any
 } from '../index.js'
 
 describe('formatValue', () => {
@@ -61,6 +62,21 @@ describe('formatValue', () => {
     class MyClass {}
     const v = new MyClass()
     expect(formatValue(v)).toBe(Object.prototype.toString.call(v))
+  })
+
+  test('falls back when JSON.stringify throws (bigint value)', () => {
+    const v = { a: 10n }
+    expect(formatValue(v)).toBe(Object.prototype.toString.call(v))
+  })
+
+  test('falls back when JSON.stringify throws (circular reference)', () => {
+    const v = {}
+    v.self = v
+    expect(formatValue(v)).toBe(Object.prototype.toString.call(v))
+
+    const arr = []
+    arr.push(arr)
+    expect(formatValue(arr)).toBe(Object.prototype.toString.call(arr))
   })
 })
 
@@ -233,6 +249,30 @@ describe('validate', () => {
     expect(res.valid).toBe(false)
     expect(res.result).toBe('not number')
     expect(res.error).toBeInstanceOf(Error)
+  })
+})
+
+describe('any validator', () => {
+  test('passes through any value unchanged', () => {
+    const ctx = makeCtx(null, null, 'x')
+    expect(any()(42, ctx)).toBe(42)
+    expect(any()('hello', ctx)).toBe('hello')
+    expect(any()(null, ctx)).toBeNull()
+    expect(any()(undefined, ctx)).toBeUndefined()
+    expect(any()({ a: 1 }, ctx)).toEqual({ a: 1 })
+    expect(any()([1, 2], ctx)).toEqual([1, 2])
+    expect(typeof any()(Symbol('x'), ctx)).toBe('symbol')
+  })
+
+  test('keeps key in object when used as property validator', () => {
+    const schema = object({
+      name: string(),
+      extra: any()
+    })
+    const value = { name: 'nana', extra: { foo: 'bar' } }
+    const res = validate(schema, value)
+    expect(res.valid).toBe(true)
+    expect(res.result).toEqual(value)
   })
 })
 

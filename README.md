@@ -176,7 +176,7 @@ console.log(
 ## With third party validator
 
 ```js
-import { string, object, pipe, check, validate } from 'nana'
+import { string, object, array, pipe, check, validate } from 'nana'
 import isEmail from 'validator/lib/isEmail.js'
 
 const userSchema = object({
@@ -216,6 +216,7 @@ console.log(
 - `bigint(msg?)`
 - `boolean(msg?)`
 - `symbol(msg?)`
+- `any()`
 - `object(obj, msg?)`
 - `array(validator, msg?)`
 

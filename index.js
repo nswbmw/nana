@@ -28,7 +28,11 @@ export function formatValue (value) {
   if (value instanceof RegExp) return value.toString()
   if (value instanceof Date) return value.toISOString()
   if (Array.isArray(value) || (value && Object.getPrototypeOf(value) === Object.prototype)) {
-    return JSON.stringify(value)
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return Object.prototype.toString.call(value)
+    }
   }
 
   return Object.prototype.toString.call(value)
@@ -103,6 +107,8 @@ export function validate (schema, value, rootPath = '$') {
   }
 }
 
+export const any = createValidator('any', (value, ctx, args) => value)
+
 export const required = createValidator('required', (value, ctx, args) => {
   const [msg] = args
 
@@ -116,7 +122,6 @@ export const required = createValidator('required', (value, ctx, args) => {
 export const optional = createValidator('optional', (value, ctx, args) => {
   if (value == null) {
     ctx.__abortPipe = true
-    return value
   }
 
   return value

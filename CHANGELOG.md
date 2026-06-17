@@ -1,3 +1,11 @@
+## v1.4.0 / 2026-06-17
+
+- feat: add any validator
+- fix: avoid formatValue throwing on bigint/circular values in JSON.stringify
+- types: split Validator into TIn/TOut to type transform & pipe correctly
+- docs: add any() to built-in list and missing array import in README
+- refactor: simplify optional branch
+
 ## v1.3.0 / 2026-02-25
 
 - refactor: use tsdown instead of tsup

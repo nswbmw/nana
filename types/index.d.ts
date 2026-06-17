@@ -6,26 +6,26 @@ export interface Ctx {
   value: any
 }
 
-export type Validator<T = any> = (value: T, ctx: Ctx) => T
+export type Validator<TIn = any, TOut = TIn> = (value: TIn, ctx: Ctx) => TOut
 
-export type ValidatorFactory<Args extends any[] = any[], T = any> = (
+export type ValidatorFactory<Args extends any[] = any[], TIn = any, TOut = TIn> = (
   ...args: Args
-) => Validator<T>
+) => Validator<TIn, TOut>
 
 export function makeCtx (parentCtx: Ctx | null, key: string | number | null, value: any): Ctx
 
 export function formatValue (value: any): string
 
-export function createValidator<Args extends any[] = any[], T = any> (
+export function createValidator<Args extends any[] = any[], TIn = any, TOut = TIn> (
   name: string,
-  handler: (value: any, ctx: Ctx, args: Args) => T
-): ValidatorFactory<Args, T>
+  handler: (value: TIn, ctx: Ctx, args: Args) => TOut
+): ValidatorFactory<Args, TIn, TOut>
 
-export function pipe<T = any> (...validators: Validator[]): Validator<T>
+export function pipe<TIn = any, TOut = any> (...validators: Validator[]): Validator<TIn, TOut>
 
 export function transform<TIn = any, TOut = any> (
   fn: (value: TIn, ctx: Ctx) => TOut
-): Validator<TOut>
+): Validator<TIn, TOut>
 
 export function check<T = any> (
   fn: (value: T, ctx: Ctx) => boolean,
@@ -57,6 +57,8 @@ export const bigint: (msg?: string) => Validator<bigint>
 export const boolean: (msg?: string) => Validator<boolean>
 
 export const symbol: (msg?: string) => Validator<symbol>
+
+export const any: () => Validator<any>
 
 export const object: (
   obj: { [key: string]: Validator<any> },
