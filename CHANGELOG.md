@@ -1,4 +1,11 @@
 
+## v2.1.0 / 2026-06-17
+
+- feat: add any validator
+- fix: avoid formatValue throwing on bigint/circular values in JSON.stringify
+- docs: add any() to built-in list and missing array import in README
+- refactor: simplify optional branch
+
 ## v2.0.1 / 2026-05-21
 
 - fix: export types

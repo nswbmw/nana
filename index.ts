@@ -67,7 +67,11 @@ export function formatValue (value: any): string {
   if (value instanceof RegExp) return value.toString()
   if (value instanceof Date) return value.toISOString()
   if (Array.isArray(value) || (value && Object.getPrototypeOf(value) === Object.prototype)) {
-    return JSON.stringify(value)
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return Object.prototype.toString.call(value)
+    }
   }
 
   return Object.prototype.toString.call(value)
@@ -256,11 +260,12 @@ export const required = createValidator<any, any, [string?]>('required', (value,
 export const optional = createValidator<unknown, unknown>('optional', (value, ctx) => {
   if (value == null) {
     ctx.__abortPipe = true
-    return value
   }
 
   return value
 }) as () => (Validator<any, any> & ControlValidator)
+
+export const any = createValidator<any, any>('any', (value) => value)
 
 export const string = createValidator<string, string, [string?]>('string', (value, ctx, args) => {
   const [msg] = args
