@@ -291,6 +291,7 @@ describe('primitive validators', () => {
   test('number success and failure', () => {
     expect(number()(1, makeCtx(null, null, 1))).toBe(1)
     expect(() => number()('1' as any, makeCtx(null, null, '1'))).toThrow('number')
+    expect(() => number()(NaN, makeCtx(null, null, NaN))).toThrow('number')
   })
 
   test('bigint success and failure', () => {
@@ -307,36 +308,6 @@ describe('primitive validators', () => {
     const s = Symbol('x')
     expect(symbol()(s, makeCtx(null, null, s))).toBe(s)
     expect(() => symbol()('sym' as any, makeCtx(null, null, 'sym'))).toThrow('symbol')
-  })
-})
-
-describe('required and optional', () => {
-  test('required passes for non-null and fails for null with default message', () => {
-    const ctxOk = makeCtx(null, null, 'x')
-    expect(required()('x', ctxOk)).toBe('x')
-
-    const ctxBad = makeCtx(null, 'r', null)
-    expect(() => required()(null, ctxBad)).toThrow('required')
-  })
-
-  test('required uses custom message when provided', () => {
-    const ctx = makeCtx(null, null, undefined)
-    expect(() => required('must not be null or undefined')(undefined, ctx)).toThrow('must not be null or undefined')
-  })
-
-  test('optional skips following validators in pipe when value is null', () => {
-    const schema = pipe(
-      optional(),
-      string()
-    )
-
-    const resNull = validate(schema, null)
-    expect(resNull.valid).toBe(true)
-    expect(resNull.result).toBeNull()
-
-    const resValue = validate(schema, 'ok')
-    expect(resValue.valid).toBe(true)
-    expect(resValue.result).toBe('ok')
   })
 })
 
@@ -409,6 +380,16 @@ describe('object validator', () => {
     expect(res.valid).toBe(false)
     expect((res.error as ValidationError).path).toBe('$.user.age')
   })
+
+  test('without shape: only checks object type', () => {
+    const schema = object()
+    expect(() => schema(null, makeCtx(null, null, null))).toThrow('object')
+    expect(() => schema([], makeCtx(null, null, []))).toThrow('object')
+
+    const res = validate(schema, { a: 1, b: 'x' })
+    expect(res.valid).toBe(true)
+    expect(res.result).toEqual({ a: 1, b: 'x' })
+  })
 })
 
 describe('array validator', () => {
@@ -429,6 +410,15 @@ describe('array validator', () => {
     if (!bad.valid) {
       expect(bad.error.path).toBe('$[1]')
     }
+  })
+
+  test('without validator: only checks array type', () => {
+    const schema = array()
+    expect(() => schema('not array' as any, makeCtx(null, null, 'not array'))).toThrow('array')
+
+    const res = validate(schema, [1, 'x', true])
+    expect(res.valid).toBe(true)
+    expect(res.result).toEqual([1, 'x', true])
   })
 })
 

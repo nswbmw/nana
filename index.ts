@@ -279,7 +279,7 @@ export const string = createValidator<string, string, [string?]>('string', (valu
 export const number = createValidator<number, number, [string?]>('number', (value, ctx, args) => {
   const [msg] = args
 
-  if (typeof value !== 'number') {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
     throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ number`)
   }
 
@@ -318,11 +318,13 @@ export const symbol = createValidator<symbol, symbol, [string?]>('symbol', (valu
 
 export type InferShape<S> = { [K in keyof S]: S[K] extends Validator<any, infer O> ? O : never }
 
-export function object<S extends Record<string, Validator<any, any>>> (shape: S, msg?: string) {
+export function object<S extends Record<string, Validator<any, any>>> (shape?: S, msg?: string) {
   return createValidator<unknown, InferShape<S>>('object', (value, ctx) => {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
       throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ object`)
     }
+
+    if (!shape) return value as any
 
     const result: any = {}
     for (const key in shape) {
@@ -344,11 +346,13 @@ export function object<S extends Record<string, Validator<any, any>>> (shape: S,
   })()
 }
 
-export function array<T> (validator: Validator<any, T>, msg?: string) {
+export function array<T> (validator?: Validator<any, T>, msg?: string) {
   return createValidator<T[], T[]>('array', (value, ctx) => {
     if (!Array.isArray(value)) {
       throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ array`)
     }
+
+    if (!validator) return value as any
 
     return value.map((item, i) => {
       const childCtx = makeCtx(ctx, i, item)
