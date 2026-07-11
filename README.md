@@ -217,8 +217,8 @@ console.log(
 - `boolean(msg?)`
 - `symbol(msg?)`
 - `any()`
-- `object(obj, msg?)`
-- `array(validator, msg?)`
+- `object(validator?, msg?)`
+- `array(validator?, msg?)`
 
 ## Test (100% coverage)
 

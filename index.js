@@ -140,7 +140,7 @@ export const string = createValidator('string', (value, ctx, args) => {
 export const number = createValidator('number', (value, ctx, args) => {
   const [msg] = args
 
-  if (typeof value !== 'number') {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
     throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ number`)
   }
 
@@ -178,16 +178,18 @@ export const symbol = createValidator('symbol', (value, ctx, args) => {
 })
 
 export const object = createValidator('object', (value, ctx, args) => {
-  const [obj, msg] = args
+  const [validator, msg] = args
 
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ object`)
   }
 
+  if (!validator) return value
+
   const result = {}
-  for (const key in obj) {
+  for (const key in validator) {
     const childCtx = makeCtx(ctx, key, value[key])
-    result[key] = obj[key](value[key], childCtx)
+    result[key] = validator[key](value[key], childCtx)
   }
   return result
 })
@@ -198,6 +200,8 @@ export const array = createValidator('array', (value, ctx, args) => {
   if (!Array.isArray(value)) {
     throw new Error(msg || `(${ctx.path}: ${formatValue(value)}) ✖ array`)
   }
+
+  if (!validator) return value
 
   return value.map((item, i) => {
     const childCtx = makeCtx(ctx, i, item)

@@ -61,11 +61,11 @@ export const symbol: (msg?: string) => Validator<symbol>
 export const any: () => Validator<any>
 
 export const object: (
-  obj: { [key: string]: Validator<any> },
+  validator?: { [key: string]: Validator<any> },
   msg?: string
 ) => Validator<any>
 
 export const array: (
-  validator: Validator<any>,
+  validator?: Validator<any>,
   msg?: string
 ) => Validator<any[]>

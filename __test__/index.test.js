@@ -289,6 +289,7 @@ describe('primitive validators', () => {
   test('number success and failure', () => {
     expect(number()(1, makeCtx(null, null, 1))).toBe(1)
     expect(() => number()('1', makeCtx(null, null, '1'))).toThrow('number')
+    expect(() => number()(NaN, makeCtx(null, null, NaN))).toThrow('number')
   })
 
   test('bigint success and failure', () => {
@@ -377,6 +378,16 @@ describe('object validator', () => {
     expect(res.valid).toBe(false)
     expect(res.error.path).toBe('$.user.age')
   })
+
+  test('without shape: only checks object type', () => {
+    const schema = object()
+    expect(() => schema(null, makeCtx(null, null, null))).toThrow('object')
+    expect(() => schema([], makeCtx(null, null, []))).toThrow('object')
+
+    const res = validate(schema, { a: 1, b: 'x' })
+    expect(res.valid).toBe(true)
+    expect(res.result).toEqual({ a: 1, b: 'x' })
+  })
 })
 
 describe('array validator', () => {
@@ -394,5 +405,14 @@ describe('array validator', () => {
     const bad = validate(schema, [1, 'x', 3])
     expect(bad.valid).toBe(false)
     expect(bad.error.path).toBe('$[1]')
+  })
+
+  test('without validator: only checks array type', () => {
+    const schema = array()
+    expect(() => schema('not array', makeCtx(null, null, 'not array'))).toThrow('array')
+
+    const res = validate(schema, [1, 'x', true])
+    expect(res.valid).toBe(true)
+    expect(res.result).toEqual([1, 'x', true])
   })
 })

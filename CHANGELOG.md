@@ -1,3 +1,8 @@
+## v1.5.0 / 2026-07-11
+
+- feat: make object() shape and array() validator optional, allowing type-only validation
+- fix: number() now rejects NaN
+
 ## v1.4.0 / 2026-06-17
 
 - feat: add any validator
